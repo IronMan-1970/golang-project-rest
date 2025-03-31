@@ -17,4 +17,8 @@ func main() {
 		port = "8080" // Використовується для локального запуску
 	}
 	server.Run(":" + port) // Запускаємо сервер на отриманому порту
+  server.GET("/", func(c *gin.Context) {
+    c.JSON(200, gin.H{"message": "API is running"})
+})
+
 }
