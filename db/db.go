@@ -2,7 +2,9 @@ package db
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
+	"fmt"
+
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
@@ -11,7 +13,8 @@ const connectionString = "postgresql://events_nezf_user:oMWXjqG7u9gtFhajI6S6gUMR
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("postgre", "postgresql://events_nezf_user:oMWXjqG7u9gtFhajI6S6gUMRGssewjNT@dpg-cvml72je5dus73f7vod0-a.oregon-postgres.render.com/events_nezf")
+	DB, err = sql.Open(
+		"postgres", connectionString)
 
 	if err != nil {
 		panic("Could not connect to database.")
@@ -25,31 +28,31 @@ func InitDB() {
 
 func createTable() {
 
-	createUserTableComand := `
-    CREATE TABLE IF NOT EXISTS users(
-      id        INTEGER PRIMARY KEY AUTOINCREMENT,
-      email     TEXT NOT NULL UNIQUE,
-      password  TEXT NOT NULL 
-    )
-  `
-	_, err := DB.Exec(createUserTableComand)
+	createUserTableCommand := `
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL
+    );
+`
+	_, err := DB.Exec(createUserTableCommand)
 	if err != nil {
-		panic("could not create events")
+		panic(fmt.Sprintf("could not create events ", err))
 	}
 
-	createEventTableComand := `
+	createEventTableCommand := `
     CREATE TABLE IF NOT EXISTS events (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      description TEXT NOT NULL,
-      location    TEXT NOT NULL,
-      dateTime    DATETIME,
-      user_id     INTEGER,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-  )
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        location TEXT NOT NULL,
+        dateTime TIMESTAMP,
+        user_id INTEGER
+      
+    );
 `
 
-	_, err = DB.Exec(createEventTableComand)
+	_, err = DB.Exec(createEventTableCommand)
 	if err != nil {
 		panic("could not create events")
 	}
