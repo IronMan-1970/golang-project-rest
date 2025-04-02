@@ -7,9 +7,11 @@ import (
 
 var DB *sql.DB
 
+const connectionString = "postgresql://events_nezf_user:oMWXjqG7u9gtFhajI6S6gUMRGssewjNT@dpg-cvml72je5dus73f7vod0-a.oregon-postgres.render.com/events_nezf"
+
 func InitDB() {
 	var err error
-	DB, err = sql.Open("sqlite3", "api.db")
+	DB, err = sql.Open("postgre", "postgresql://events_nezf_user:oMWXjqG7u9gtFhajI6S6gUMRGssewjNT@dpg-cvml72je5dus73f7vod0-a.oregon-postgres.render.com/events_nezf")
 
 	if err != nil {
 		panic("Could not connect to database.")
