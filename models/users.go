@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"go/by/example/restful/api/db"
 	"go/by/example/restful/api/utils"
 )
@@ -11,23 +12,44 @@ type Users struct {
 	Password string `binding:"required"`
 }
 
-func (u Users) Save() error{
-  query := ` 
+func (u Users) Save() error {
+	query := ` 
     INSERT INTO users(email, password)
     VALUES (?,?)
   `
-  stmt, err := db.DB.Prepare(query)
-  if err != nil {
-    return err
-  }
-  defer stmt.Close()
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
 
-  hashedPassword, err := utils.HashPassword(u.Password)
+	hashedPassword, err := utils.HashPassword(u.Password)
 
-  if err != nil {
-    return err
-  }
+	if err != nil {
+		return err
+	}
 
-  _, err = stmt.Exec(&u.Email, &hashedPassword)
-  return err
+	_, err = stmt.Exec(&u.Email, &hashedPassword)
+	return err
+}
+
+func (u Users) Validate() error {
+	query := "SELECT id, password FROM users WHERE email = ?"
+
+	row := db.DB.QueryRow(query, u.Email)
+
+	var retrivedPassword string
+	err := row.Scan(&u.ID, &retrivedPassword)
+
+	if err != nil {
+		return errors.New("Credentials failed")
+	}
+
+ 
+	complience := utils.CheckCompliance(retrivedPassword, u.Password)
+	if !complience {
+		return errors.New("Credentials failed")
+	}
+
+	return nil
 }

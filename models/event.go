@@ -12,19 +12,20 @@ type Event struct {
 	Description string    `binding:"required"`
 	Location    string    `binding:"required"`
 	DateTime    time.Time `binding:"required"`
-	UserID      int
+	UserID      int64
 }
 
-func (e Event) Save() error {
+func (e *Event) Save() error {
 	query := `
-    INSERT INTO events (name, description, location, dateTime, user_id)
-    VALUES ($1, $2, $3, $4, $5)`
+    INSERT INTO events(name, description, location, dateTime, user_id)
+    VALUES (?, ?, ?, ?, ?)
+  `
 	stmt, err := db.DB.Prepare(query)
 	if err != nil {
 		return errors.New("when setup qerry")
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(
+	result, err := stmt.Exec(
 		e.Name,
 		e.Description,
 		e.Location,
@@ -34,6 +35,8 @@ func (e Event) Save() error {
 	if err != nil {
 		return errors.New("when run qerry")
 	}
+	id, err := result.LastInsertId()
+	e.ID = id
 	return err
 }
 
@@ -69,7 +72,7 @@ func GetAllEvents() ([]Event, error) {
 }
 
 func GetEventById(eventId int64) (*Event, error) {
-	query := "SELECT * FROM events WHERE id = $1"
+	query := "SELECT * FROM events WHERE id = ?"
 	row := db.DB.QueryRow(query, eventId)
 
 	var event Event
@@ -90,9 +93,9 @@ func GetEventById(eventId int64) (*Event, error) {
 
 func (event Event) Update() error {
 	getQuery := `
-    UPDATE events
-    SET name = $1, description = $2, location = $3, dateTime = $4
-    WHERE id = $5
+  UPDATE events
+  SET name = ?, description = ?, location = ?, dateTime = ?
+  WHERE id = ?
   `
 	stmt, err := db.DB.Prepare(getQuery)
 	if err != nil {
@@ -104,7 +107,7 @@ func (event Event) Update() error {
 	return err
 }
 func (event Event) Delete() error {
-	delQuery := `DELETE FROM events WHERE id = $1 `
+	delQuery := `DELETE FROM events WHERE id = ? `
 	stmt, err := db.DB.Prepare(delQuery)
 	if err != nil {
 		return errors.New("uncorrect query")

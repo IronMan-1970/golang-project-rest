@@ -2,6 +2,7 @@ package routes
 
 import (
 	"go/by/example/restful/api/models"
+	"go/by/example/restful/api/utils"
 	"net/http"
 	"strconv"
 
@@ -42,8 +43,21 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+
+	token := context.Request.Header.Get("Authorization")
+	if token == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "You should be authorized!!!"})
+		return
+	}
+
+userId,	err := utils.ValidateToken(token)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Token invalid", "error": err})
+		return
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(
@@ -53,8 +67,7 @@ func createEvent(context *gin.Context) {
 		return
 	}
 
-	event.ID = 1
-	event.UserID = 1
+	event.UserID = userId
 
 	err = event.Save()
 	if err != nil {
@@ -118,13 +131,13 @@ func deleteEvent(context *gin.Context) {
 	//1)
 	eventId, err := strconv.ParseInt(context.Param("id"), 10, 64)
 	if err != nil {
-		  context.JSON(
-        http.StatusBadRequest,
-        gin.H{"message": "Could not pass id", "error": err},
-      )
-    return
+		context.JSON(
+			http.StatusBadRequest,
+			gin.H{"message": "Could not pass id", "error": err},
+		)
+		return
 	}
-  deleteEvent, err := models.GetEventById(eventId)
+	deleteEvent, err := models.GetEventById(eventId)
 	if err != nil {
 		context.JSON(
 			http.StatusInternalServerError,
@@ -132,19 +145,19 @@ func deleteEvent(context *gin.Context) {
 		)
 		return
 	}
-  //2)
-  err = deleteEvent.Delete()
-  if err != nil {
-	  context.JSON( 
-      http.StatusBadRequest,
-      gin.H{"message": "An error ocured during removing object", "error": err},
-    )
-    return
+	//2)
+	err = deleteEvent.Delete()
+	if err != nil {
+		context.JSON(
+			http.StatusBadRequest,
+			gin.H{"message": "An error ocured during removing object", "error": err},
+		)
+		return
 	}
 	//3)
-   context.JSON( 
-      http.StatusAccepted,
-      gin.H{"message": "Removing object sucsseded", "eventId": eventId},
-    )
+	context.JSON(
+		http.StatusAccepted,
+		gin.H{"message": "Removing object sucsseded", "eventId": eventId},
+	)
 
 }
