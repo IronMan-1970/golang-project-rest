@@ -2,7 +2,6 @@ package routes
 
 import (
 	"go/by/example/restful/api/models"
-	"go/by/example/restful/api/utils"
 	"net/http"
 	"strconv"
 
@@ -43,21 +42,8 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-
-	token := context.Request.Header.Get("Authorization")
-	if token == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "You should be authorized!!!"})
-		return
-	}
-
-userId,	err := utils.ValidateToken(token)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Token invalid", "error": err})
-		return
-	}
-
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
+	err := context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(
@@ -67,6 +53,7 @@ userId,	err := utils.ValidateToken(token)
 		return
 	}
 
+	userId := context.GetInt64("userId")
 	event.UserID = userId
 
 	err = event.Save()
@@ -102,6 +89,7 @@ func updateEvent(context *gin.Context) {
 		)
 		return
 	}
+	
 
 	//2) Checking if the format of object what we just got
 	var updateEvent models.Event

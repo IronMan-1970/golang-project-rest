@@ -33,7 +33,7 @@ func (u Users) Save() error {
 	return err
 }
 
-func (u Users) Validate() error {
+func (u *Users) Validate() error {
 	query := "SELECT id, password FROM users WHERE email = ?"
 
 	row := db.DB.QueryRow(query, u.Email)
@@ -42,13 +42,12 @@ func (u Users) Validate() error {
 	err := row.Scan(&u.ID, &retrivedPassword)
 
 	if err != nil {
-		return errors.New("Credentials failed")
+		return errors.New("credentials failed")
 	}
 
- 
 	complience := utils.CheckCompliance(retrivedPassword, u.Password)
 	if !complience {
-		return errors.New("Credentials failed")
+		return errors.New("credentials failed")
 	}
 
 	return nil
